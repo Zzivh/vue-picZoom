@@ -3,19 +3,20 @@
     <div
       class="box-img"
       ref="boxImg"
+      :style="{ height: `${boxSize}px`, width: `${boxSize}px` }"
       @mouseover="handleOver"
       @mousemove="handleMove"
       @mouseleave="handleLeave"
     >
-      <img src="@/assets/logo.png" alt="img" />
-      <div
-        class="box-hover"
-        :style="this.mousePositon"
-        v-show="isMouseOver"
-      ></div>
+      <img :src="picURL" alt="img" />
+      <div class="box-hover" :style="mousePositon" v-show="isMouseOver"></div>
     </div>
-    <div class="box-img-mini" v-show="isMouseOver">
-      <img src="@/assets/logo.png" alt="img" />
+    <div
+      class="box-img-mini"
+      v-show="isMouseOver"
+      :style="{ left: `${this.boxSize}px` }"
+    >
+      <img :src="picURL" alt="img" :style="hoverBoxStyle" />
     </div>
   </div>
 </template>
@@ -23,12 +24,32 @@
 <script>
 export default {
   name: "PicZoom",
+  props: {
+    // 图片框大小
+    boxSize: {
+      type: Number,
+      default: 200,
+    },
+    // hover模糊框大小, 放大倍数根据此计算
+    hoverBoxSize: {
+      type: Number,
+      default: 50,
+    },
+    // 图片地址
+    picURL: {
+      type: String,
+      default: require("@/assets/logo.png"),
+    },
+  },
   computed: {
     // hover状态时阴影块的位置
     hoverBoxStyle() {
       return {
-        top: this.mousePositon.top,
-        left: this.mousePositon.left,
+        top: `-${parseInt(this.mousePositon.top) - 8}px`,
+        left: `-${parseInt(this.mousePositon.left) - 8}px`,
+        zoom: this.boxSize / this.hoverBoxSize,
+        width: `${this.boxSize}px`,
+        height: `${this.boxSize}px`,
       };
     },
   },
@@ -42,6 +63,8 @@ export default {
       },
       isMouseOver: false,
       mousePositon: {
+        width: this.hoverBoxSize + "px",
+        height: this.hoverBoxSize + "px",
         top: "8px",
         left: "8px",
       },
@@ -52,24 +75,27 @@ export default {
       this.isMouseOver = true;
     },
     handleMove(e) {
-      console.log(e.clientY);
-      // this.mousePositon = {
-      //   top: `${e.clientY - 25 > 200 ? 0 : e.clientY - 25}px`,
-      //   left: `${e.clientX - 25 > 200 ? 0 : e.clientX - 25}px`,
-      // };
-      if (e.clientY < this.hoverLimitPosition.minTop + 25) {
+      if (e.clientY < this.hoverLimitPosition.minTop + this.hoverBoxSize / 2) {
         this.mousePositon.top = this.hoverLimitPosition.minTop + "px";
-      } else if (e.clientY > this.hoverLimitPosition.maxTop - 25) {
-        this.mousePositon.top = this.hoverLimitPosition.maxTop - 50 + "px";
+      } else if (
+        e.clientY >
+        this.hoverLimitPosition.maxTop - this.hoverBoxSize / 2
+      ) {
+        this.mousePositon.top =
+          this.hoverLimitPosition.maxTop - this.hoverBoxSize + "px";
       } else {
-        this.mousePositon.top = e.clientY - 25 + "px";
+        this.mousePositon.top = e.clientY - this.hoverBoxSize / 2 + "px";
       }
-      if (e.clientX < this.hoverLimitPosition.minLeft + 25) {
+      if (e.clientX < this.hoverLimitPosition.minLeft + this.hoverBoxSize / 2) {
         this.mousePositon.left = this.hoverLimitPosition.minLeft + "px";
-      } else if (e.clientX > this.hoverLimitPosition.maxLeft - 25) {
-        this.mousePositon.left = this.hoverLimitPosition.maxLeft - 50 + "px";
+      } else if (
+        e.clientX >
+        this.hoverLimitPosition.maxLeft - this.hoverBoxSize / 2
+      ) {
+        this.mousePositon.left =
+          this.hoverLimitPosition.maxLeft - this.hoverBoxSize + "px";
       } else {
-        this.mousePositon.left = e.clientX - 25 + "px";
+        this.mousePositon.left = e.clientX - this.hoverBoxSize / 2 + "px";
       }
     },
     handleLeave() {
@@ -78,9 +104,9 @@ export default {
   },
   mounted() {
     this.hoverLimitPosition = {
-      maxTop: this.$refs.main.offsetTop + 200,
+      maxTop: this.$refs.main.offsetTop + this.boxSize,
       minTop: this.$refs.main.offsetTop,
-      maxLeft: this.$refs.main.offsetLeft + 200,
+      maxLeft: this.$refs.main.offsetLeft + this.boxSize,
       minLeft: this.$refs.main.offsetLeft,
     };
   },
@@ -93,30 +119,34 @@ export default {
   display: inline-block;
   position: relative;
   .box-img {
+    cursor: move;
     box-sizing: border-box;
     border: 1px solid #f2f2f2;
-    width: 200px;
-    height: 200px;
     z-index: 9;
     img {
-      width: 100%;
-      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+      width: fit-content;
+      height: fit-content;
     }
   }
   .box-hover {
-    width: 50px;
-    height: 50px;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.3);
     position: fixed;
     top: 0;
     bottom: 0;
   }
   .box-img-mini {
+    margin-left: 10px;
     border: 1px solid #f2f2f2;
     position: absolute;
-    left: 200px;
     bottom: 0;
     top: 0;
+    width: 100%;
+    overflow: hidden;
+    img {
+      position: absolute;
+    }
   }
 }
 </style>
